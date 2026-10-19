@@ -1,0 +1,20 @@
+{
+  "eventId": "evt-wf-normal-task-planned",
+  "source": "planner",
+  "eventType": "TaskPlanned",
+  "schemaVersion": "1.1",
+  "workflowId": "wf-normal",
+  "expectedStateVersion": 1,
+  "correlationId": "wf-normal",
+  "causationId": "evt-wf-normal-requested",
+  "idempotencyKey": "demo-tenant:wf-normal:submit-payment-instruction",
+  "data": {
+    "action": "SUBMIT_PAYMENT_INSTRUCTION",
+    "debitAccountRef": "demo-account-001",
+    "beneficiaryRef": "demo-beneficiary-001",
+    "amountMinor": 25000,
+    "currency": "USD",
+    "route": "DEMO_NETWORK",
+    "clientReference": "client-42"
+  }
+}

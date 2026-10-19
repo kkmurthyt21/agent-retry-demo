@@ -1,0 +1,15 @@
+// JDK 17/21 test subprocesses: all network permissions are intentionally absent.
+// The negative-control NetworkProbe must fail specifically with access denied.
+grant {
+ permission java.io.FilePermission "<<ALL FILES>>", "read,write,delete";
+ permission java.util.PropertyPermission "*", "read,write";
+ permission java.lang.RuntimePermission "*";
+ permission java.lang.reflect.ReflectPermission "*";
+ permission java.security.SecurityPermission "*";
+ permission java.sql.SQLPermission "*";
+ permission java.util.logging.LoggingPermission "control";
+ permission java.lang.management.ManagementPermission "monitor";
+ permission javax.management.MBeanServerPermission "*";
+ permission javax.management.MBeanPermission "*", "*";
+ permission javax.management.MBeanTrustPermission "register";
+};
