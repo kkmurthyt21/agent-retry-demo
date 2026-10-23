@@ -6,13 +6,23 @@
 
 **How does Java understand the request?** The Gemini response includes structured functionCall parts. Java dispatches only the registered name and allowed arguments. `submit_payment` becomes an ActionProposed event. No application parses free-form prose to authorize money movement.
 
-**What makes this event-driven if it uses HTTP?** HTTP carries broker protocol operations and provider API requests. Domain requests and completion are durable messages; the agent's progress does not depend on receiving an executor's original HTTP response. Transport choice and workflow coordination are different concerns.
+**What exactly is a tool request?** It is a function name and arguments selected by Gemini from the schemas supplied by the Java application. For example, `{"functionCall":{"name":"submit_payment","args":{"invoiceId":"INV-1042"}}}` asks the application to process that invoice. AgenticPlanner validates and saves the selection, then publishes ActionProposed. Gemini does not call the provider directly or choose the payment amount and beneficiary.
+
+**What makes this event-driven if it uses HTTP?** Applications publish, claim and acknowledge queued events through the local broker's HTTP interface. The response to publication confirms storage of the event. A payment result arrives later through a separate ToolResultReady or WorkflowVerified event. TaskPlanned and ActionCompleted also pass through the durable workflow queue. The mock provider's submission and evidence reads use its own HTTP API.
 
 **What is specific to agents?** A model can create a fresh semantically equivalent tool request after it receives UNKNOWN or stale context. A new event ID alone would not deduplicate that request. Application-owned business operation identity protects the effect across both fresh model proposals and infrastructure redelivery. The underlying idempotency and transaction patterns also apply to ordinary applications.
 
 **Which application crashes?** In the secondary fault, only the workflow-worker JVM halts after the mock provider commits. The agent/launcher, broker and provider remain running. In the primary fault, no JVM crashes: the agent completion consumer pauses before saving and acknowledging its event.
 
 **Why a deterministic executor and verifier?** Domain code can consistently enforce approval, select trusted money fields and compare provider evidence. This example needs one model planner, not three model agents. A model verifier would introduce additional uncertainty into an exact evidence comparison.
+
+**What is the implementation difference between Executor and Verifier?** Executor.execute(...) first looks up a receipt for the stable operation identity. It returns that matching receipt or submits the saved approved request. Verifier.verify(...) independently reads the provider's accepted payment record and receipt, then compares their identity, ACCEPTED status and fingerprints with the approved request. The workflow marks VERIFIED only after those checks pass. Verification confirms acceptance, not settlement.
+
+**How does Verifier know when to run?** It has no listener of its own. AgenticWorkflow.handle(...) calls Executor.execute(...) when the worker consumes TaskPlanned. After saving EXECUTED and the receipt, the worker publishes ActionCompleted. Consuming that event makes the same worker call Verifier.verify(...). Both are Java classes inside the workflow JVM.
+
+**Who are tenant and provider?** The fixed tenant ID demo-tenant represents the organization using the invoice application. The provider is a separate local mock payment service with its own database. It owns the accepted payment records and receipts that the workflow retrieves and checks. No real bank is involved.
+
+**What are inbox and outbox here?** The inbox is a workflow database table of completed event IDs and fingerprints, used to detect redelivery. The outbox stores outgoing events in the same local transaction as the workflow change. A publisher sends those rows to the broker. They are separate from the broker queues; they make local state changes and outgoing messages recoverable across crashes. Provider writes remain outside that local transaction.
 
 **Is this a Saga?** This candidate coordinates one external accepted payment request. It has no multi-service compensation sequence. Describe it as a durable event-driven workflow with inbox/outbox, idempotency and reconciliation.
 
