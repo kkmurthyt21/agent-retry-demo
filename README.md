@@ -10,7 +10,7 @@ The invoice-payment assistant uses **Spring AI 2.0.1 and Gemini** to select regi
 
 An agent can receive `UNKNOWN` after a payment request has already been accepted and verified. It can query status or propose the same action again. A fresh model tool-call ID or event ID does not make that a new approved business operation.
 
-The application owns the stable operation identity, approval and payment parameters, durable state, inbox/outbox, retry budgets and provider evidence. These mechanisms protect the effect across new agent requests and event redelivery.
+The application owns the stable operation identity, trusted approval and payment parameters, workflow state, inbox/outbox and retry budgets. The mock payment provider owns its accepted payment records and receipts. The workflow retrieves that evidence, compares it with the saved approved request, and stores its result. These mechanisms protect the payment request across new agent requests and event redelivery.
 
 | Scenario | Actual evidence |
 | --- | --- |
@@ -69,15 +69,52 @@ Read the [fresh-start checklist](docs/REHEARSAL_CHECKLIST.md) and [seven-minute 
 
 ```mermaid
 flowchart TD
-  G["Remote Gemini model"] <--> A["Java agent application: Spring AI and journal"]
-  A <--> B["Durable local event broker"]
-  B <--> W["Workflow application: policy, Executor, Verifier"]
-  W <--> P["Mock payment provider and its database"]
+  G["Remote Gemini model"] <--> A["Agent JVM: Spring AI and journal"]
+  A -->|"Request events"| B["Broker JVM: durable queues"]
+  B -->|"Result events"| A
+  B -->|"Request and stage events"| W
+  W -->|"Stage and result events"| B
+  subgraph Workflow["Workflow JVM"]
+    W["AgenticWorkflow: policy, state, inbox and outbox"]
+    W -->|"TaskPlanned"| E["Executor.execute"]
+    W -->|"ActionCompleted"| V["Verifier.verify"]
+  end
+  E <-->|"Look up receipt or submit"| P["Mock payment provider JVM and database"]
+  V <-->|"Read accepted record and receipt"| P
 ```
 
 Four local JVMs run: agent/launcher, broker, workflow application and mock provider. Planner, Executor and Verifier are logical responsibilities; Executor and Verifier are deterministic Java classes in the same workflow JVM. The model integration uses Spring AI programmatically, without Spring Boot.
 
-HTTP carries the Gemini API, local broker operations and provider calls. Durable queued events coordinate business requests and completion. Local database transactions do not include the provider's database.
+### What a tool request means
+
+A tool is a function the Java application describes to Gemini with a name, description and argument schema. A tool request is the model's structured selection of that function. For example, a Gemini response can contain this function-call part:
+
+```json
+{"functionCall":{"name":"submit_payment","args":{"invoiceId":"INV-1042"}}}
+```
+
+`GeminiPlannerModel` reads the structured response. `AgenticPlanner` validates the registered tool name and allowed arguments, saves the call and its outgoing event, and publishes it through the broker. Gemini does not call the payment service directly. The application supplies the approved amount, beneficiary, approval version and stable operation identity.
+
+| Selected function | Event published by the agent | Workflow response |
+| --- | --- | --- |
+| `get_invoice_context(invoiceId)` | `ContextRequested` | Return the fixture's invoice approval, hold, amount and beneficiary facts |
+| `get_payment_status(invoiceId)` | `StatusRequested` | Return the saved workflow state |
+| `submit_payment(invoiceId)` | `ActionProposed` | Check policy; save and schedule the approved request, or reuse an existing verified result |
+
+For this fixture, the approved request is **USD 250.00 for invoice `INV-1042` to `demo-beneficiary-001`, approval version 1**. Its stable identity is `demo-tenant:INV-1042:approval-v1:submit-payment`. `demo-tenant` identifies the example organization using the application. The provider is the separate local mock payment service; no real payment processor is contacted.
+
+### Who invokes Executor and Verifier
+
+`AgenticWorkflow` consumes the workflow queue and dispatches events in `handle(...)`:
+
+| Event consumed | Java code invoked | Result |
+| --- | --- | --- |
+| `TaskPlanned` | `Executor.execute(...)` | Look up the same operation at the provider; recover a matching receipt or submit the saved approved request. Save `EXECUTED` and enqueue `ActionCompleted`. |
+| `ActionCompleted` | `Verifier.verify(...)` | Read the provider's accepted record and receipt; compare their identity and payment fingerprint with the saved approved request. On a match, the workflow saves `VERIFIED` and enqueues `WorkflowVerified`. |
+
+Executor performs or recovers the payment submission. Verifier checks the provider's stored outcome. Neither class runs a model or listens to the broker independently; the workflow worker invokes each when its event arrives. A mismatch fails verification with `VERIFICATION_MISMATCH`.
+
+Applications publish, claim and acknowledge durable events through the demo broker's HTTP interface. A publish response confirms that the broker stored the event; payment completion arrives later as a result event. Gemini and the mock provider also expose HTTP APIs. Local workflow transactions do not include the provider's database. See the [event and transaction walkthrough](docs/AGENTIC_ARCHITECTURE.md) for inbox/outbox details.
 
 | Concern | Source |
 | --- | --- |
