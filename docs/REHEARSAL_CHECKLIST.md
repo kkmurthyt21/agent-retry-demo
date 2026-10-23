@@ -1,49 +1,62 @@
-# Rehearsal checklist
+# Start after a laptop restart
 
-The software verification is complete. This checklist records the presenter and laptop checks still to perform. Mark only checks actually completed.
+Use the extracted v1.1.0-rc.1 package or the already tested build4 directory. Keep one PowerShell window open throughout setup and presentation. Running a packaged JAR does not require an IDE.
 
-## Today: one complete rehearsal
+1. Connect power and internet, open PowerShell, and enter the folder containing the JAR.
 
-- [ ] Open the deck in the presentation application used on the laptop. Check fonts, notes, hidden appendices, diagrams, and presenter view.
-- [ ] Run `java -version`. Use a compatible local Java runtime, with Java 17 as the tested baseline.
-- [ ] Extract the complete kit and use a writable local directory. Do not run from inside the ZIP or a cloud-only placeholder.
-- [ ] Reset and preflight the synthetic demo offstage. Confirm zero instructions.
-- [ ] Disconnect the laptop from the internet and run the four commands in order. Confirm exits 0, 0, 23, 0 and final counts 1 per workflow, 2 total, 0 added during recovery.
-- [ ] Verify the backup MP4 plays locally, including readable text. It has captions and no audio. Practice narrating one chapter.
-- [ ] Rehearse the entire session with a timer, including terminal/deck transitions and eight minutes reserved for questions.
-- [ ] Answer the first eight Q&A questions aloud. Keep each initial answer within one minute.
+   ```powershell
+   Set-Location "C:\Users\KKM\Documents\agent-retry-demo-checkpoint-build4"
+   Test-Path .\agent-retry-demo.jar
+   java -version
+   ```
 
-## Timing checkpoints
+   This is the presenter's tested path. Adapt it to your extraction. Test-Path must return True. The reported Windows runtime was Temurin 25.0.4.1.
 
-| Elapsed | Checkpoint |
-|---|---|
-| 03:00 | Failure story established; move to role responsibilities |
-| 10:00 | Contract and version sections finished |
-| 19:00 | Commit/acknowledgement gap explained |
-| 25:30 | Recovery decisions complete |
-| 27:00 | Begin the four-command demonstration |
-| 34:00 | Return to recovery invariants |
-| 37:00 | Begin Q&A |
-| 45:00 | Finish |
+2. Before going on stage, check local process startup and repeated-call protection.
 
-If concepts run long, shorten the detailed version discussion and individual contract-field explanation. Preserve the crash/recovery demonstration, the three-minute conclusion, and the Q&A boundary. Do not rush through extra implementation details.
+   ```powershell
+   java "-Ddemo.debug=true" -jar .\agent-retry-demo.jar agentic --mode scripted --fault completion --wait-ms 8000
+   ```
 
-## October 23: freeze and copy
+   Confirm build=1.1.0-candidate-build4-checkpoints, SCRIPTED, submitProposals=2, provider.submissionCalls=1, provider.instructions=1 and invariantsPassed=true. The controlled fault deliberately waits for the tool-observation deadline.
 
-- [ ] Keep the exact deck, JAR, transcript, and backup playback together. Record their hashes after any changes.
-- [ ] Re-run the final four-command sequence after any Java changes.
-- [ ] Put a second copy on a USB drive or another local device.
-- [ ] Confirm the route, arrival plan, registration, and any updated organizer schedule.
-- [ ] Pack the laptop charger and required display adapters. Confirm the laptop can use the venue’s HDMI connection.
+3. Configure the existing private Gemini key and the tested model. Masked entry is needed only when this terminal has no key.
 
-## October 24: at the venue
+   ```powershell
+   if ([string]::IsNullOrWhiteSpace($env:GEMINI_API_KEY)) {
+       $demoSecureKey = Read-Host "Gemini API key" -AsSecureString
+       $env:GEMINI_API_KEY = ([System.Net.NetworkCredential]::new("", $demoSecureKey)).Password
+   }
+   $env:GEMINI_MODEL = "gemini-3.5-flash-lite"
+   ```
 
-- [ ] Check in by 2:15 PM at the latest for the scheduled 2:45 PM session. Earlier arrival leaves more A/V time.
-- [ ] Confirm Room 318 and the current end time with the organizer.
-- [ ] Test projection, microphone, terminal size, display scaling, and presenter view.
-- [ ] Open the deck, terminal, backup video, and static transcript before the talk.
-- [ ] Reset/preflight the demo. Keep the laptop awake and notifications quiet.
-- [ ] Begin with the failure story. Announce the intentional crash before running it.
-- [ ] Finish at 3:30 PM. Preserve the delivered artifact versions afterward.
+   PowerShell $env: assignments apply to this process and its children. Windows user environment variables configured persistently are inherited by newly launched terminals. Enter credentials before screen sharing.
 
-The venue checks and the presenter’s full timed rehearsal cannot be completed remotely. Keep their status visible rather than treating successful software tests as a completed live rehearsal.
+4. Check live model connectivity before the talk.
+
+   ```powershell
+   java -jar .\agent-retry-demo.jar agentic preflight --mode gemini --check-model
+   ```
+
+   Check build4, GEMINI, SPRING_AI_GOOGLE_GENAI_2.0.1, the intended model, and MODEL_CONNECTED. A preflight success does not guarantee the later workflow call will succeed. If a 503 or timeout occurs, retry the preflight once. If it remains unavailable, use the explicitly labelled captured evidence and local scripted scenario.
+
+5. Prepare the architecture diagram and a saved successful live run. The presenter's build4 live recovery directory was runs/agentic-ba50c192-06d6-4f70-9f7c-67c90b84b26f. Its full agent-trace.jsonl remains on that laptop. This public package supplies its reported summary under evidence/windows/live-completion/.
+
+6. On stage, clear the display and run the main live fault.
+
+   ```powershell
+   Clear-Host
+   java "-Ddemo.debug=true" -jar .\agent-retry-demo.jar agentic --mode gemini --fault completion --wait-ms 8000
+   ```
+
+   Explain tool selection, the application-owned operation identity, and which consumer is paused. Watch UNKNOWN and the model's actual next tool. Check the final summary rather than relying on final model prose. Keep the planned three-minute live window; move to captured evidence if the live call overruns.
+
+7. Show the controlled repeated-tool case.
+
+   ```powershell
+   java "-Ddemo.debug=true" -jar .\agent-retry-demo.jar agentic --mode scripted --fault completion --wait-ms 8000
+   ```
+
+   Explain that the next tool choices are predefined. Show two submit proposals, verifiedReuse=1, one provider submission/record, delivery count 2 and invariantsPassed=true.
+
+Each scenario gets a fresh runs/agentic-UUID directory by default. Preflight does not create a scenario directory. No reset, deletion, resume, rebuild or cloud deployment is required between these commands. Keep successful evidence intact. Full private H2 journals are not presentation or public-release assets.

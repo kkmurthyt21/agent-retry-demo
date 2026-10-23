@@ -1,30 +1,33 @@
-# Verified test results
+# Build4 validation
 
-Verification date: October 19, 2026. Runtime: OpenJDK 17.0.20. Build tool: Maven 3.9.11.
+Runtime build: 1.1.0-candidate-build4-checkpoints. Prerelease tag: v1.1.0-rc.1.
 
-Verification lifecycle: `mvn clean verify`. Dependencies were resolved during preparation. Result: **BUILD SUCCESS**.
+## Automated verification
 
-The Java package is `dev.agentretry.demo`, the Maven group is `dev.agentretry`, and the runnable entry point is `dev.agentretry.demo.Main`. All suites were rerun after this package correction. The current JAR SHA-256 is `e22d7e195a2f098a22d0c90aeb67798e9858c2ad9136410c4cbaf5e3540122d9`.
+The build4 preparation environment recorded mvn verify on Linux OpenJDK 17.0.20 and Maven 3.9.11: **95 tests: 85 unit and 10 integration; zero failures, errors or skipped tests**. The public ../evidence/automated/ directory contains the recorded report and final log.
 
-| Group | Suite | Tests | Failures | Errors | Skipped |
-|---|---|---:|---:|---:|---:|
-| Unit/regression | GatewayTest | 11 | 0 | 0 | 0 |
-| Unit/regression | WorkflowTest | 31 | 0 | 0 | 0 |
-| Packaged integration | PackagedDemoIT | 3 | 0 | 0 | 0 |
-| Total | All suites | 45 | 0 | 0 | 0 |
+Tests cover contract and policy boundaries, state/correlation, provider idempotency, bounded failures, checkpoint replacement and diagnostics, workflow readiness, normal operation, completion redelivery, real worker-JVM crash recovery and packaged Spring AI protocol exchange. Protocol tests simulate Gemini responses and are labelled separately from live API evidence.
 
-The 42 unit/regression cases include normal flow, event and action duplicates, conflicting identities and parameters, schema versions and invalid structures, permission checks, stale state, delivery/processing separation, persisted backoff and exhaustion, deadline expiry, transaction rollback, gateway concurrency, Verifier failure, and restart after local completion.
+A separate 45-second idle-worker rehearsal confirmed status was not rewritten while unchanged, all roles remained alive, and a direct event fixture subsequently reached VERIFIED with one provider record. Its source is DIRECT_EVENT_FIXTURE_NO_MODEL.
 
-The three packaged tests run the shaded JAR in child JVMs:
+## Presenter-reported Windows runs
 
-1. Hard halt after independent gateway commit, inspect saved files before recovery, then recover in a fresh JVM.
-2. Run the four prepared commands with socket access denied. A separate probe verifies that a socket connection is denied.
-3. Verify reset refuses an unmarked nonempty directory and preserves unrelated files.
+Platform: Windows; Temurin Java 25.0.4.1. Live model: gemini-3.5-flash-lite through Spring AI 2.0.1.
 
-The crash command exits 23 intentionally. The other stage commands exit 0. Recovery reports one instruction for the action, two total instructions for the two distinct workflows, zero new instructions during recovery, and zero gateway submission calls in the recovering process.
+| Scenario | Decisions and outcome |
+| --- | --- |
+| Scripted completion fault | Two submit proposals; one new proposal after UNKNOWN; verifiedReuse=1; one provider submission and accepted record; completion delivery count 2; invariants passed |
+| Live normal | Three model replies; one submit proposal; no UNKNOWN; one provider record; VERIFIED; invariants passed |
+| Live completion fault | Four model replies; one submit proposal; one status query after UNKNOWN; no fresh payment proposal; completion delivery count 2; one provider record; VERIFIED; invariants passed |
 
-The Security Manager is only the JDK 17/21 integration-test mechanism for denying sockets. The normal demo commands do not enable it. No internet access is required by the packaged application.
+These payloads were supplied by the presenter as console output. The publication process did not independently read the Windows files. Exact reported run IDs and provenance are in ../evidence/windows/provenance.json. No additional Windows worker-crash or policy-hold run is claimed here.
 
-These results describe the synthetic application and process-restart scenario. They do not measure real provider behavior, settlement, throughput, or hardware-failure durability.
+The live fault run recovered from an HTTP 503 on the second API attempt for the final model response. This was a model API retry, not another payment submission. Supplied excerpts show individual model turns around 27–36 seconds; they do not establish complete run duration.
 
-A timed presenter rehearsal, laptop playback, and venue A/V checks remain separate human checks.
+## Publication check and unchanged runtime
+
+The publication environment reran the scripted completion scenario against the exact recovered build4 JAR. It passed with two proposals and one provider submission/record. That result is explicitly scripted and does not add a live Gemini run. No new Java or dependency changes were made for publication; the recorded 95-test result belongs to that tested runtime.
+
+JAR SHA-256: 5ac099ff4d457c3c1ec9a87e494bda97a9b37aee3c9d7f0c1baf05bc857b4773.
+
+Each scenario's invariants apply to this mock provider and local durable stores. VERIFIED is not settlement; no universal exactly-once or production deployment guarantee is established.

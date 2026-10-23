@@ -112,7 +112,8 @@ class WorkflowTest {
     @Test void malformedDuplicatePropertiesAndTrailingJsonAreRejected() {
         var c = new Contracts();
         assertThrows(Problems.Contract.class, () -> c.parse("{"));
-        var event = new Planner().propose("wf-test", Json.normalInstruction(), "1.0");
+        var event = new Planner(new ScriptedAgentDecisionProvider(ScriptedAgentDecisionProvider.Scenario.APPROVED))
+                .propose("wf-test", Json.normalInstruction(), "1.0");
         String valid = Json.write(event);
         assertThrows(Problems.Contract.class, () -> c.parse(valid + " {}"));
         assertThrows(Problems.Contract.class, () -> c.parse("{\"eventId\":\"duplicate\"," + valid.substring(1)));

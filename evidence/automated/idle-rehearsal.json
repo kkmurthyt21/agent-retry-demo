@@ -1,0 +1,30 @@
+{
+  "evidenceSource": "DIRECT_EVENT_FIXTURE_NO_MODEL",
+  "platform": "Linux OpenJDK 17.0.20",
+  "idleSeconds": 45,
+  "unchangedCheckpointWasNotRewritten": true,
+  "allRolesSurvivedIdle": true,
+  "workflow": {
+    "state": "VERIFIED",
+    "operationId": "demo-tenant:INV-1042:approval-v1:submit-payment",
+    "settled": false,
+    "stateVersion": 4,
+    "receipt": {
+      "tenant": "demo-tenant",
+      "actionKey": "demo-tenant:INV-1042:approval-v1:submit-payment",
+      "fingerprint": "f4aefb67284374353a5e5fcf8379bbf4823e37dbab48bc60d4c6b23cd41809e1",
+      "instructionId": "pi-f91e6f3c504ed7f090c9110b",
+      "acceptedAt": 1792683952246
+    },
+    "executionAttempts": 1,
+    "verifiedReuse": 0,
+    "failureCount": 0
+  },
+  "provider": {
+    "instructions": 1,
+    "submissionCalls": 1,
+    "lookupCalls": 3
+  },
+  "jarSha256": "5ac099ff4d457c3c1ec9a87e494bda97a9b37aee3c9d7f0c1baf05bc857b4773",
+  "passed": true
+}

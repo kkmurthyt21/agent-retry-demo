@@ -1,63 +1,48 @@
-# Seven-minute demonstration script
+# Seven-minute agent and reliability demo
 
-Begin at presentation minute 27. End at minute 34. The terminal is already open beside the deck. The JAR and fresh fixture directory are prepared before speaking. Run each command in a new JVM from the same working directory.
+Use the tested build4 JAR. Run setup and connectivity checks before the talk; see REHEARSAL_CHECKLIST.md.
 
-## Before the session
+| Time | Screen and explanation |
+| --- | --- |
+| 0:00–1:00 | Architecture: one Java agent application uses Gemini; a durable local broker connects it to the workflow application; Executor and Verifier run inside that workflow JVM; the mock provider owns its accepted records. |
+| 1:00–4:00 | Launch the live completion-fault case. While the model responds, explain registered tools, application-owned payment parameters and the operation identity. Observe the fault and actual recovery choice. |
+| 4:00–5:00 | Inspect the summary: one accepted record, VERIFIED, completion redelivery, invariants passed. The reported Gemini run recovered by status query. |
+| 5:00–6:00 | Run the programmed repeated-tool case: another submit request reuses the verified operation; two proposals produce one provider submission and record. |
+| 6:00–7:00 | Connect the outcome to stable business identity, durable state, provider evidence and inbox/outbox. New model-call and event IDs can still represent the same approved operation. |
 
-Run `java -version`, then `java -jar agent-retry-demo.jar demo reset` and `java -jar agent-retry-demo.jar demo preflight`. Expect zero instructions and schemas `1.0,1.1`. Use a font readable from the back of the room. Test a long rejection line and the final recovery counts. Keep the backup MP4 and transcript open locally. Do not build or reset during the live demonstration.
+## Main live command
 
-## 27:00–28:15: normal workflow
-
-Say: “The request is USD 250 to a synthetic beneficiary. The Planner proposes the instruction. Application policy checks it, the Executor submits it, and the Verifier reads the gateway’s record.”
-
-```text
-java -jar agent-retry-demo.jar demo normal
+```powershell
+java "-Ddemo.debug=true" -jar .\agent-retry-demo.jar agentic --mode gemini --fault completion --wait-ms 8000
 ```
 
-Point to `PLANNER`, `GATEWAY`, `EXECUTOR`, and `VERIFIER`. The workflow is `COMPLETED` at version 4. Highlight `plannerRuns=1`, `instructionsForWorkflow=1`, and `totalInstructions=1`.
+| Trace marker | Explain |
+| --- | --- |
+| TOOL_PROPOSED | Gemini selected one of the registered tools; the Java agent application journals and dispatches it as an event. |
+| COMPLETION_CONSUMER_PAUSED | The Java agent application's completion consumer pauses after claiming the completion event, before recording it or ACK. No JVM crashes in this fault. |
+| TOOL_UNKNOWN | The bounded observation wait expired. UNKNOWN describes the agent's observation; the workflow/provider may already have completed their work. |
+| Next TOOL_PROPOSED | Describe the actual tool. The recorded live run selected get_payment_status; a future run might select submit_payment again. |
+| EVENT_OBSERVED, WorkflowVerified, deliveryCount=2 | The earlier unacknowledged completion event was redelivered. This is distinct from a fresh model tool request. |
+| RUN_SUMMARY | Check structured evidence: provider.instructions=1, workflow.state=VERIFIED, completionFaultTriggered=true, maxCompletionDeliveryCount>=2 and invariantsPassed=true. |
 
-Say: “One approved instruction produced one acceptance. This is our baseline.”
+VERIFIED confirms the accepted mock payment record matches the approved request. Settlement is outside the demo. A final model sentence cannot change the authoritative state.
 
-## 28:15–30:00: duplicate and rejection boundaries
+## Controlled repeated-call case
 
-```text
-java -jar agent-retry-demo.jar demo boundaries
+```powershell
+java "-Ddemo.debug=true" -jar .\agent-retry-demo.jar agentic --mode scripted --fault completion --wait-ms 8000
 ```
 
-Point to `DUPLICATE_EVENT` first. Say: “The same delivered fact is already processed.” Then point to `REUSED_ACTION`. Say: “This envelope has a fresh event ID but asks for the same completed business action.”
+The test model follows predefined decisions and calls submit_payment again after UNKNOWN. Broker, workflow, Executor, Verifier, H2 stores and mock provider still run. Expected: SCRIPTED_REPROPOSAL, submitProposals=2, freshPaymentProposalsAfterUnknown=1, verifiedReuse=1, one provider submission/accepted record and invariantsPassed=true. Label this as a controlled repeated-tool test.
 
-Show `UNSUPPORTED_SCHEMA_VERSION` under `VALIDATION_REJECTED`. Show `BENEFICIARY_DENIED` under `POLICY_REJECTED`. Say: “The second rejection is structurally valid JSON. Policy makes a separate decision.”
+## Live evidence and timing
 
-Highlight `totalInstructions=1`. None of these inputs added a business instruction. Do not explain every schema keyword or open source files.
+The successful Windows build4 run reported GEMINI_STATUS_RECONCILIATION with one status query after UNKNOWN, zero fresh payment proposals, completion delivery count 2 and one accepted provider record. liveAgentRetryProven=false accurately reflects that branch. A separate HTTP 503 during the final model response recovered on the second model API attempt; it did not submit a payment again.
 
-## 30:00–31:45: the deliberate crash
+Observed individual model turns took roughly 27–36 seconds in the supplied excerpts. The full run duration is not established by those partial excerpts. Use the saved successful trace as a labelled fallback if the live window overruns. Public playback displays a reported summary and makes no API call:
 
-Say before running: “The next command will stop its JVM with exit code 23. That is the prepared fault. Watch the gateway count and the unfinished local state.”
-
-```text
-java -jar agent-retry-demo.jar demo crash
+```powershell
+.\scripts\replay-captured.ps1
 ```
 
-Point to `toolCommitted=true`, `localAcknowledged=false`, `savedState=EXECUTING`, and `localReceiptSaved=false`. There is one instruction for `wf-crash` and two in total, because `wf-normal` is a different intended action.
-
-Say: “The process has stopped. The gateway already accepted the instruction. The workflow has not recorded success. A missing acknowledgement has not undone the acceptance.”
-
-Pause briefly for the audience to predict what recovery should do.
-
-## 31:45–34:00: restart and recover
-
-```text
-java -jar agent-retry-demo.jar demo recover
-```
-
-Point to `savedState=EXECUTING`, `savedStateVersion=2`, `plannerRuns=1`, and the original action key. This is a new process reading durable state. It does not run the Planner again.
-
-Show `RECOVERED_RECEIPT`. The receipt ID matches the crash command. Then show Verifier completion, `instructionsForWorkflow=1`, `totalInstructions=2`, `additionalInstructionsDuringRecovery=0`, and `gatewaySubmissionCallsThisRun=0`.
-
-Say: “Recovery found the existing acceptance, saved its receipt, and completed the remaining verification. It added no instruction and made no new submission call.”
-
-Return to slide 16 at minute 34: one intended action, one stable key, one accepted instruction.
-
-## Fallback transition
-
-If a command produces an unexpected result, spend at most 20 seconds identifying the observed state. Say: “I have the captured run of this same packaged application. Let’s inspect the boundary there.” Switch to the matching backup chapter and narrate it. The full backup lasts seven minutes; use only the remaining chapters if the live demonstration has already started. Do not reset, rebuild, inspect SQL, or debug onstage.
+If Gemini is unavailable, present the saved real-run evidence and the explicitly scripted fault drill. Do not describe playback or a scripted decision as a new live model response.

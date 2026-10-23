@@ -18,11 +18,18 @@ final class WorkflowEngine implements AutoCloseable {
     private final Clock clock;
     private final Faults faults;
     private final Consumer<String> out;
+    private final AgentDecisionProvider decisions;
+    int agentDecisionCalls;
     private final Policy policy = new Policy();
     private final Executor executor;
     private final Verifier verifier;
 
     WorkflowEngine(Path root, Clock clock, Faults faults, Consumer<String> output) {
+        this(root, clock, faults, output,
+                new ScriptedAgentDecisionProvider(ScriptedAgentDecisionProvider.Scenario.APPROVED));
+    }
+    WorkflowEngine(Path root, Clock clock, Faults faults, Consumer<String> output, AgentDecisionProvider decisions) {
+        this.decisions = java.util.Objects.requireNonNull(decisions);
         this.clock = clock; this.faults = faults; this.out = output;
         lock = new RunLock(root);
         Database opened = null;
@@ -42,6 +49,9 @@ final class WorkflowEngine implements AutoCloseable {
     }
 
     JsonNode plan(String workflow, JsonNode approved, JsonNode proposal, String version) {
+        return plan(workflow, approved, new ScriptedAgentDecisionProvider(proposal), version);
+    }
+    JsonNode plan(String workflow, JsonNode approved, AgentDecisionProvider provider, String version) {
         var existing = workflow(workflow);
         if (existing == null) {
             db.execute("INSERT INTO workflows(workflow_id,tenant,subject_name,role_name,status,state_version,approved_json,deadline_ms) VALUES(?,?,?,?,?,?,?,?)",
@@ -51,7 +61,14 @@ final class WorkflowEngine implements AutoCloseable {
                 throw new Problems.Permanent("WORKFLOW_REQUEST_CONFLICT");
             if (!"NEW".equals(existing.text("status"))) return originalPlanEvent(workflow);
         }
-        var event = new Planner().propose(workflow, proposal, version);
+        agentDecisionCalls++;
+        var event = new Planner(provider).propose(workflow, approved, version);
+        var proposal = event.path("data");
+        out.accept("[AGENT_DECISION] workflow=" + workflow + " decisionSource=" + provider.source());
+        out.accept("  approved: beneficiary=" + approved.path("beneficiaryRef").asText()
+                + " amountMinor=" + approved.path("amountMinor").asText() + " currency=" + approved.path("currency").asText());
+        out.accept("  proposed: beneficiary=" + proposal.path("beneficiaryRef").asText()
+                + " amountMinor=" + proposal.path("amountMinor").asText() + " currency=" + proposal.path("currency").asText());
         try { contracts.validate(event); }
         catch (Problems.Contract e) { rejectIngress(event, e.reason); return event; }
         try { authorize(workflow(workflow), proposal, "PLAN_APPROVAL"); }
@@ -68,7 +85,7 @@ final class WorkflowEngine implements AutoCloseable {
         out.accept("[PLANNER] workflow=" + workflow + " plan=AUTHORIZED state=PLANNED stateVersion=1");
         return event;
     }
-    JsonNode start(String workflow) { return plan(workflow, Json.normalInstruction(), Json.normalInstruction(), "1.0"); }
+    JsonNode start(String workflow) { return plan(workflow, Json.normalInstruction(), decisions, "1.0"); }
     JsonNode originalPlanEvent(String workflow) {
         var row = db.one("SELECT event_json FROM event_queue WHERE workflow_id=? AND consumer='Executor' ORDER BY delivery_id FETCH FIRST 1 ROW ONLY", workflow);
         return row == null ? null : Json.read(row.text("event_json"));

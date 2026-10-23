@@ -1,0 +1,162 @@
+{
+  "build": "1.1.0-candidate-build4-checkpoints",
+  "preparedDate": "2026-10-22",
+  "buildAndTestPlatform": "Linux OpenJDK 17.0.20; Maven 3.9.11",
+  "totals": {
+    "tests": 95,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "suites": [
+    {
+      "suite": "dev.agentretry.demo.AgentDecisionTest",
+      "kind": "unit",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "dev.agentretry.demo.AgenticPlannerTest",
+      "kind": "unit",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "dev.agentretry.demo.AgenticProtocolTest",
+      "kind": "unit",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "dev.agentretry.demo.AgenticWorkflowTest",
+      "kind": "unit",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "dev.agentretry.demo.CheckpointFilesTest",
+      "kind": "unit",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "dev.agentretry.demo.GatewayTest",
+      "kind": "unit",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "dev.agentretry.demo.ModelWaitTest",
+      "kind": "unit",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "dev.agentretry.demo.SpringAiGeminiTest",
+      "kind": "unit",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "dev.agentretry.demo.WorkflowTest",
+      "kind": "unit",
+      "tests": 31,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "dev.agentretry.demo.AgenticDemoIT",
+      "kind": "integration",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "dev.agentretry.demo.PackagedDemoIT",
+      "kind": "integration",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "dev.agentretry.demo.SpringAiJarIT",
+      "kind": "integration",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "jarSha256": "5ac099ff4d457c3c1ec9a87e494bda97a9b37aee3c9d7f0c1baf05bc857b4773",
+  "jarBytes": 41681365,
+  "idleWorkerRehearsal": {
+    "evidenceSource": "DIRECT_EVENT_FIXTURE_NO_MODEL",
+    "platform": "Linux OpenJDK 17.0.20",
+    "idleSeconds": 45,
+    "unchangedCheckpointWasNotRewritten": true,
+    "allRolesSurvivedIdle": true,
+    "workflow": {
+      "state": "VERIFIED",
+      "operationId": "demo-tenant:INV-1042:approval-v1:submit-payment",
+      "settled": false,
+      "stateVersion": 4,
+      "receipt": {
+        "tenant": "demo-tenant",
+        "actionKey": "demo-tenant:INV-1042:approval-v1:submit-payment",
+        "fingerprint": "f4aefb67284374353a5e5fcf8379bbf4823e37dbab48bc60d4c6b23cd41809e1",
+        "instructionId": "pi-f91e6f3c504ed7f090c9110b",
+        "acceptedAt": 1792683952246
+      },
+      "executionAttempts": 1,
+      "verifiedReuse": 0,
+      "failureCount": 0
+    },
+    "provider": {
+      "instructions": 1,
+      "submissionCalls": 1,
+      "lookupCalls": 3
+    },
+    "jarSha256": "5ac099ff4d457c3c1ec9a87e494bda97a9b37aee3c9d7f0c1baf05bc857b4773",
+    "passed": true
+  },
+  "changedSourceFiles": [
+    "README.md",
+    "docs/CHECKPOINT_CANDIDATE.md",
+    "src/main/java/dev/agentretry/demo/AgenticDemo.java",
+    "src/main/java/dev/agentretry/demo/AgenticHttp.java",
+    "src/main/java/dev/agentretry/demo/AgenticWorkflow.java",
+    "src/main/java/dev/agentretry/demo/CheckpointFiles.java",
+    "src/test/java/dev/agentretry/demo/AgenticDemoIT.java",
+    "src/test/java/dev/agentretry/demo/AgenticWorkflowTest.java",
+    "src/test/java/dev/agentretry/demo/CheckpointFilesTest.java"
+  ],
+  "originalWindowsCheckpointException": "UNKNOWN; original build reported only the generic wrapper",
+  "approvedSourceAndKitUnchanged": true,
+  "windowsValidation": "THREE_PRESENTER_REPORTED_BUILD4_RUNS_PASSED; see ../windows/provenance.json",
+  "liveGeminiCandidateValidation": "PRESENTER_REPORTED_LIVE_NORMAL_AND_COMPLETION_PASSED; recovery was status reconciliation",
+  "publication": {
+    "tag": "v1.1.0-rc.1",
+    "runtimeJarUnchanged": true,
+    "reportedWindowsEvidence": "../windows/provenance.json",
+    "note": "Original automated totals were recorded in the build4 preparation environment. Windows outcomes were subsequently reported by the presenter."
+  }
+}

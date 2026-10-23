@@ -1,0 +1,9 @@
+{
+  "source": "PUBLICATION_ENVIRONMENT_SCRIPTED_RUN",
+  "build": "1.1.0-candidate-build4-checkpoints",
+  "platform": "Linux OpenJDK 17",
+  "runtimeJarSha256": "5ac099ff4d457c3c1ec9a87e494bda97a9b37aee3c9d7f0c1baf05bc857b4773",
+  "scenario": "scripted completion",
+  "liveModelCalled": false,
+  "invariantsPassed": true
+}

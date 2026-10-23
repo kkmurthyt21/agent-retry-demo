@@ -1,0 +1,11 @@
+PRESENTER-PROVIDED CONSOLE EXCERPT: Windows build4 live completion recovery.
+This excerpt is partial. Full agent-trace.jsonl remains on the presenter's Windows laptop.
+
+[GEMINI] MODEL_REQUEST_COMPLETED {"elapsedMs":32449,"nextTurn":3,"toolCalls":1}
+[GEMINI] TOOL_PROPOSED {"name":"get_payment_status","args":{"invoiceId":"INV-1042"}}
+[GEMINI] EVENT_OBSERVED {"toolCallId":"f40f0e55-7d13-46e6-861a-9c2aae370f1d","deliveryCount":2,"type":"WorkflowVerified"}
+[GEMINI] EVENT_OBSERVED {"toolCallId":"2da08aff-0658-4bce-a91f-3c0c04fb3333","deliveryCount":1,"type":"ToolResultReady"}
+[GEMINI] MODEL_REQUEST_STARTED {"attempt":1,"nextTurn":4,"model":"gemini-3.5-flash-lite"}
+[MODEL_API_RETRY] attempt=1 reason=GEMINI_HTTP_503
+[GEMINI] MODEL_REQUEST_STARTED {"attempt":2,"nextTurn":4,"model":"gemini-3.5-flash-lite"}
+[GEMINI] MODEL_REQUEST_COMPLETED {"elapsedMs":30813,"nextTurn":4,"toolCalls":0}

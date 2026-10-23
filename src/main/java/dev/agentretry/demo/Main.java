@@ -18,7 +18,12 @@ public final class Main {
         }
     }
     static void run(String[] args) throws Exception {
-        if (args.length == 0 || "--help".equals(args[0])) { help(); return; }
+        if (args.length > 0 && "agentic".equals(args[0])) { AgenticDemo.run(java.util.Arrays.copyOfRange(args, 1, args.length)); return; }
+        if (args.length > 0 && "agentic-service".equals(args[0])) { AgenticDemo.service(args); return; }
+        if (args.length == 0 || "--help".equals(args[0])) {
+            System.out.println("Gemini integration: agentic --help (live model or explicit scripted rehearsal)");
+            help(); return;
+        }
         if (args.length != 2 && args.length != 4) throw new IllegalArgumentException("Use demo <scenario> [--data-dir <directory>]");
         if (!"demo".equals(args[0])) throw new IllegalArgumentException("First argument must be demo");
         if (args.length == 4 && !"--data-dir".equals(args[2])) throw new IllegalArgumentException("Unknown option");
@@ -44,7 +49,7 @@ public final class Main {
             holder[0] = app;
             switch (scenario) {
                 case "preflight" -> {
-                    System.out.println("PREFLIGHT java=" + System.getProperty("java.version") + " schemas=1.0,1.1 H2_WRITE_DELAY=0");
+                    System.out.println("PREFLIGHT java=" + System.getProperty("java.version") + " schemas=1.0,1.1 H2_WRITE_DELAY=0 decisionSource=SCRIPTED");
                     System.out.println("  dataDirectory=" + root);
                     System.out.println("  totalInstructions=" + app.gateway.count());
                     System.out.println("  offlineRuntime=true singleDispatcherLock=ACQUIRED");
@@ -66,6 +71,7 @@ public final class Main {
                     app.pump(); summary(app, "wf-crash");
                     System.out.println("  additionalInstructionsDuringRecovery=" + (app.gateway.count() - before));
                     System.out.println("  gatewaySubmissionCallsThisRun=" + app.gateway.submissionCalls.get());
+                    System.out.println("  agentDecisionCallsThisRun=" + app.agentDecisionCalls);
                 }
                 default -> throw new IllegalStateException("Unexpected scenario");
             }
@@ -78,8 +84,10 @@ public final class Main {
         app.enqueue(event); app.pump();
         var fresh = event.deepCopy(); ((com.fasterxml.jackson.databind.node.ObjectNode) fresh).put("eventId", "evt-wf-normal-fresh-envelope");
         app.enqueue(fresh); app.pump();
-        app.plan("wf-invalid", Json.normalInstruction(), Json.normalInstruction(), "2.0");
-        app.plan("wf-policy", Json.normalInstruction(), Json.instruction("demo-beneficiary-999", 25000), "1.0");
+        app.plan("wf-invalid", Json.normalInstruction(),
+                new ScriptedAgentDecisionProvider(ScriptedAgentDecisionProvider.Scenario.APPROVED), "2.0");
+        app.plan("wf-policy", Json.normalInstruction(),
+                new ScriptedAgentDecisionProvider(ScriptedAgentDecisionProvider.Scenario.UNAUTHORIZED_BENEFICIARY), "1.0");
         app.pump();
         System.out.println("[BOUNDARIES] validationFailures=" + app.failures("VALIDATION") + " policyFailures=" + app.failures("POLICY")
                 + " totalInstructions=" + app.gateway.count());

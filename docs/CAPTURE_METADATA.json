@@ -1,45 +1,11 @@
 {
-  "capturedAt": "2026-10-19T19:27:39.242742+00:00",
-  "jarSha256": "e22d7e195a2f098a22d0c90aeb67798e9858c2ad9136410c4cbaf5e3540122d9",
-  "runtime": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment (build 17.0.20+8-1-24.04-Ubuntu)\nOpenJDK 64-Bit Server VM (build 17.0.20+8-1-24.04-Ubuntu, mixed mode, sharing)",
-  "javaPackage": "dev.agentretry.demo",
-  "mavenGroupId": "dev.agentretry",
-  "records": [
-    {
-      "command": "java -jar agent-retry-demo.jar demo reset",
-      "scenario": "reset",
-      "exitCode": 0,
-      "stdout": "RESET synthetic demo databases cleared; unrelated files preserved\n"
-    },
-    {
-      "command": "java -jar agent-retry-demo.jar demo preflight",
-      "scenario": "preflight",
-      "exitCode": 0,
-      "stdout": "PREFLIGHT java=17.0.20 schemas=1.0,1.1 H2_WRITE_DELAY=0\n  dataDirectory=/workspace/scratch/6033fa6a8822/devfest-complete/DevFest_Troy_2026_Complete_Kit/data/devfest-demo\n  totalInstructions=0\n  offlineRuntime=true singleDispatcherLock=ACQUIRED\n"
-    },
-    {
-      "command": "java -jar agent-retry-demo.jar demo normal",
-      "scenario": "normal",
-      "exitCode": 0,
-      "stdout": "[PLANNER] workflow=wf-normal plan=AUTHORIZED state=PLANNED stateVersion=1\n[GATEWAY] status=ACCEPTED created=true instructionId=pi-5be762559ca7cabf942fb58d\n[EXECUTOR] workflow=wf-normal state=EXECUTED receiptSaved=true inputAcknowledged=true\n[VERIFIER] workflow=wf-normal evidence=MATCH state=COMPLETED\n[RESULT] workflow=wf-normal state=COMPLETED stateVersion=4\n  savedPlan=true plannerRuns=1\n  instructionsForWorkflow=1 totalInstructions=1\n"
-    },
-    {
-      "command": "java -jar agent-retry-demo.jar demo boundaries",
-      "scenario": "boundaries",
-      "exitCode": 0,
-      "stdout": "[DUPLICATE_EVENT] eventId=evt-wf-normal-task-planned ignored=true\n[REUSED_ACTION] newEventId=evt-wf-normal-fresh-envelope sameActionKey=true externalActionRepeated=false\n[VALIDATION_REJECTED] workflow=wf-invalid reason=UNSUPPORTED_SCHEMA_VERSION outcome=REJECTED\n[POLICY_REJECTED] workflow=wf-policy reason=BENEFICIARY_DENIED outcome=REJECTED\n[BOUNDARIES] validationFailures=1 policyFailures=1 totalInstructions=1\n"
-    },
-    {
-      "command": "java -jar agent-retry-demo.jar demo crash",
-      "scenario": "crash",
-      "exitCode": 23,
-      "stdout": "[PLANNER] workflow=wf-crash plan=AUTHORIZED state=PLANNED stateVersion=1\n[GATEWAY] status=ACCEPTED created=true instructionId=pi-9678354fd546a32c995c1cba\n[CRASH_CHECKPOINT] workflow=wf-crash toolCommitted=true localAcknowledged=false\n  savedState=EXECUTING localReceiptSaved=false\n  instructionsForWorkflow=1 totalInstructions=2\n[INTENTIONAL_HALT] exitCode=23 (planned demo fault)\n"
-    },
-    {
-      "command": "java -jar agent-retry-demo.jar demo recover",
-      "scenario": "recover",
-      "exitCode": 0,
-      "stdout": "[RESTART] savedState=EXECUTING savedStateVersion=2 plannerRuns=1 localReceiptSaved=false\n  originalActionKey=demo-tenant:wf-crash:submit-payment-instruction\n[RECOVERED_RECEIPT] instructionId=pi-9678354fd546a32c995c1cba externalActionRepeated=false\n[EXECUTOR] workflow=wf-crash state=EXECUTED receiptSaved=true inputAcknowledged=true\n[VERIFIER] workflow=wf-crash evidence=MATCH state=COMPLETED\n[RESULT] workflow=wf-crash state=COMPLETED stateVersion=4\n  savedPlan=true plannerRuns=1\n  instructionsForWorkflow=1 totalInstructions=2\n  additionalInstructionsDuringRecovery=0\n  gatewaySubmissionCallsThisRun=0\n"
-    }
-  ]
+  "build": "1.1.0-candidate-build4-checkpoints",
+  "prerelease": "v1.1.0-rc.1",
+  "currentEvidenceIndex": "../evidence/README.md",
+  "windowsRunProvenance": "../evidence/windows/provenance.json",
+  "liveRecovery": "GEMINI_STATUS_RECONCILIATION",
+  "liveFreshPaymentReproposalCaptured": false,
+  "completeLiveTracesIncluded": false,
+  "historicalOfflineTranscript": "DEMO_TRANSCRIPT.txt",
+  "note": "Do not treat the legacy offline transcript, scripted fixture or protocol-test responses as a current live model capture."
 }

@@ -36,9 +36,12 @@ class PackagedDemoIT {
         assertEquals(0, run(false, "reset").exit());
         var normal = run(false, "normal"); assertEquals(0, normal.exit(), normal.output());
         assertTrue(normal.output().contains("state=COMPLETED")); assertTrue(normal.output().contains("totalInstructions=1"));
+        assertTrue(normal.output().contains("decisionSource=SCRIPTED"), normal.output());
+        assertTrue(normal.output().contains("proposed: beneficiary=demo-beneficiary-001"), normal.output());
         var boundaries = run(false, "boundaries"); assertEquals(0, boundaries.exit(), boundaries.output());
         for (String expected : List.of("DUPLICATE_EVENT", "REUSED_ACTION", "VALIDATION_REJECTED", "POLICY_REJECTED", "totalInstructions=1"))
             assertTrue(boundaries.output().contains(expected), boundaries.output());
+        assertTrue(boundaries.output().contains("proposed: beneficiary=demo-beneficiary-999"), boundaries.output());
         var crash = run(false, "crash"); assertEquals(Main.PLANNED_CRASH_EXIT, crash.exit(), crash.output());
         assertTrue(crash.output().contains("toolCommitted=true localAcknowledged=false"));
         var data = root.resolve("data/devfest-demo");
@@ -54,8 +57,10 @@ class PackagedDemoIT {
         }
         var recovered = run(false, "recover"); assertEquals(0, recovered.exit(), recovered.output());
         for (String expected : List.of("savedState=EXECUTING", "RECOVERED_RECEIPT", "state=COMPLETED", "plannerRuns=1",
-                "instructionsForWorkflow=1 totalInstructions=2", "additionalInstructionsDuringRecovery=0", "gatewaySubmissionCallsThisRun=0"))
+                "instructionsForWorkflow=1 totalInstructions=2", "additionalInstructionsDuringRecovery=0", "gatewaySubmissionCallsThisRun=0",
+                "agentDecisionCallsThisRun=0"))
             assertTrue(recovered.output().contains(expected), recovered.output());
+        assertFalse(recovered.output().contains("[AGENT_DECISION]"), recovered.output());
         var restartedAgain = run(false, "preflight"); assertEquals(0, restartedAgain.exit(), restartedAgain.output());
         assertTrue(restartedAgain.output().contains("totalInstructions=2"));
     }
@@ -72,6 +77,9 @@ class PackagedDemoIT {
         var recovered = run(true, "recover"); assertEquals(0, recovered.exit(), recovered.output());
         assertTrue(recovered.output().contains("additionalInstructionsDuringRecovery=0"));
         assertTrue(recovered.output().contains("gatewaySubmissionCallsThisRun=0"));
+        assertTrue(normal.output().contains("decisionSource=SCRIPTED"));
+        assertTrue(boundaries.output().contains("proposed: beneficiary=demo-beneficiary-999"));
+        assertTrue(recovered.output().contains("agentDecisionCallsThisRun=0"));
     }
     @Test void resetRefusesUnmarkedDirectoryAndPreservesUnrelatedFiles() throws Exception {
         jar(); var data = root.resolve("data/devfest-demo"); Files.createDirectories(data);

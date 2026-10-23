@@ -1,0 +1,25 @@
+{
+  "build": "1.1.0-candidate-build4-checkpoints",
+  "source": "PRESENTER_PROVIDED_CONSOLE_OUTPUT",
+  "reportedDate": "2026-10-22",
+  "platform": "Windows; Temurin Java 25.0.4.1",
+  "fullWindowsTraceFilesIncluded": false,
+  "note": "Payload values transcribed from RUN_SUMMARY objects supplied by the presenter in chat; source Windows files were not read directly by the publication process.",
+  "runs": [
+    {
+      "scenario": "scripted-completion",
+      "reportedRunId": "agentic-faa48689-d2b9-4bd6-a330-eb1af9fdc14e",
+      "summary": "scripted-completion/run-summary.json"
+    },
+    {
+      "scenario": "live-normal",
+      "reportedRunId": "agentic-f27b3509-4492-4742-be22-0821a693c218",
+      "summary": "live-normal/run-summary.json"
+    },
+    {
+      "scenario": "live-completion",
+      "reportedRunId": "agentic-ba50c192-06d6-4f70-9f7c-67c90b84b26f",
+      "summary": "live-completion/run-summary.json"
+    }
+  ]
+}

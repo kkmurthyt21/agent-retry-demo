@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS operations(operation_id VARCHAR(255) PRIMARY KEY, state VARCHAR(24), state_version INT, execution_event VARCHAR(255), attempts INT DEFAULT 0, intent CLOB, receipt CLOB);
+CREATE TABLE IF NOT EXISTS waiters(call_id VARCHAR(255) PRIMARY KEY, operation_id VARCHAR(255));
+CREATE TABLE IF NOT EXISTS inbox(event_id VARCHAR(255) PRIMARY KEY, fingerprint VARCHAR(64));
+CREATE TABLE IF NOT EXISTS outbox(event_id VARCHAR(255) PRIMARY KEY, topic VARCHAR(20), body CLOB, attempts INT DEFAULT 0, status VARCHAR(20) DEFAULT 'READY');
+CREATE TABLE IF NOT EXISTS failures(event_id VARCHAR(255), channel VARCHAR(20), reason VARCHAR(255));
+CREATE TABLE IF NOT EXISTS counters(name VARCHAR(80) PRIMARY KEY, n INT);

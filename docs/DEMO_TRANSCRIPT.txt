@@ -1,20 +1,26 @@
+HISTORICAL OFFLINE TRANSCRIPT: original demo command family, not a live Gemini run.
+Current build4 evidence: ../evidence/README.md
+
 When AI Agents Retry — actual packaged application output
-Captured October 19, 2026. Synthetic fixtures. The crash exits 23 intentionally.
+Captured October 19, 2026. Synthetic fixtures; decisionSource=SCRIPTED. The crash exits 23 intentionally.
 Java package: dev.agentretry.demo; Maven group: dev.agentretry
-JAR SHA-256: e22d7e195a2f098a22d0c90aeb67798e9858c2ad9136410c4cbaf5e3540122d9
+JAR SHA-256: 52de46ca6c60cb67ca459849c4b3bc10d7f9466e1fb36d2ed41f17b24bf555a9
 
 $ java -jar agent-retry-demo.jar demo reset
 RESET synthetic demo databases cleared; unrelated files preserved
 [process exit 0]
 
 $ java -jar agent-retry-demo.jar demo preflight
-PREFLIGHT java=17.0.20 schemas=1.0,1.1 H2_WRITE_DELAY=0
+PREFLIGHT java=17.0.20 schemas=1.0,1.1 H2_WRITE_DELAY=0 decisionSource=SCRIPTED
   dataDirectory=/workspace/scratch/6033fa6a8822/devfest-complete/DevFest_Troy_2026_Complete_Kit/data/devfest-demo
   totalInstructions=0
   offlineRuntime=true singleDispatcherLock=ACQUIRED
 [process exit 0]
 
 $ java -jar agent-retry-demo.jar demo normal
+[AGENT_DECISION] workflow=wf-normal decisionSource=SCRIPTED
+  approved: beneficiary=demo-beneficiary-001 amountMinor=25000 currency=USD
+  proposed: beneficiary=demo-beneficiary-001 amountMinor=25000 currency=USD
 [PLANNER] workflow=wf-normal plan=AUTHORIZED state=PLANNED stateVersion=1
 [GATEWAY] status=ACCEPTED created=true instructionId=pi-5be762559ca7cabf942fb58d
 [EXECUTOR] workflow=wf-normal state=EXECUTED receiptSaved=true inputAcknowledged=true
@@ -27,12 +33,21 @@ $ java -jar agent-retry-demo.jar demo normal
 $ java -jar agent-retry-demo.jar demo boundaries
 [DUPLICATE_EVENT] eventId=evt-wf-normal-task-planned ignored=true
 [REUSED_ACTION] newEventId=evt-wf-normal-fresh-envelope sameActionKey=true externalActionRepeated=false
+[AGENT_DECISION] workflow=wf-invalid decisionSource=SCRIPTED
+  approved: beneficiary=demo-beneficiary-001 amountMinor=25000 currency=USD
+  proposed: beneficiary=demo-beneficiary-001 amountMinor=25000 currency=USD
 [VALIDATION_REJECTED] workflow=wf-invalid reason=UNSUPPORTED_SCHEMA_VERSION outcome=REJECTED
+[AGENT_DECISION] workflow=wf-policy decisionSource=SCRIPTED
+  approved: beneficiary=demo-beneficiary-001 amountMinor=25000 currency=USD
+  proposed: beneficiary=demo-beneficiary-999 amountMinor=25000 currency=USD
 [POLICY_REJECTED] workflow=wf-policy reason=BENEFICIARY_DENIED outcome=REJECTED
 [BOUNDARIES] validationFailures=1 policyFailures=1 totalInstructions=1
 [process exit 0]
 
 $ java -jar agent-retry-demo.jar demo crash
+[AGENT_DECISION] workflow=wf-crash decisionSource=SCRIPTED
+  approved: beneficiary=demo-beneficiary-001 amountMinor=25000 currency=USD
+  proposed: beneficiary=demo-beneficiary-001 amountMinor=25000 currency=USD
 [PLANNER] workflow=wf-crash plan=AUTHORIZED state=PLANNED stateVersion=1
 [GATEWAY] status=ACCEPTED created=true instructionId=pi-9678354fd546a32c995c1cba
 [CRASH_CHECKPOINT] workflow=wf-crash toolCommitted=true localAcknowledged=false
@@ -52,5 +67,5 @@ $ java -jar agent-retry-demo.jar demo recover
   instructionsForWorkflow=1 totalInstructions=2
   additionalInstructionsDuringRecovery=0
   gatewaySubmissionCallsThisRun=0
+  agentDecisionCallsThisRun=0
 [process exit 0]
-

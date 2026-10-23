@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS agent_meta(name VARCHAR(80) PRIMARY KEY, val CLOB);
+CREATE TABLE IF NOT EXISTS pending(call_id VARCHAR(255) PRIMARY KEY, call_order INT, turn_no INT, tool_name VARCHAR(80), provider_id VARCHAR(255), response CLOB, deadline BIGINT);
+CREATE TABLE IF NOT EXISTS outbox(event_id VARCHAR(255) PRIMARY KEY, body CLOB, attempts INT DEFAULT 0, status VARCHAR(20) DEFAULT 'READY');
+CREATE TABLE IF NOT EXISTS inbox(event_id VARCHAR(255) PRIMARY KEY, fingerprint VARCHAR(64));

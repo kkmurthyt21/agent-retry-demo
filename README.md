@@ -1,126 +1,128 @@
 # When AI Agents Retry
 
-An offline Java demonstration for Krishna Kandi’s DevFest Troy 2026 session, **When AI Agents Retry: Building Reliable Event-Driven Workflows**.
+Working Java demo for **When AI Agents Retry: Building Reliable Event-Driven Workflows**, DevFest Troy 2026.
 
-A deterministic Planner proposes a synthetic payment instruction. Application policy authorizes it. The Executor submits it to a durable mock gateway. The Verifier reads the gateway’s records and compares them with the approved intent.
+The invoice-payment assistant uses **Spring AI 2.0.1 and Gemini** to select registered tools. A Java agent application dispatches those selections through durable events. Deterministic business code checks current policy, executes an approved payment request against a mock provider, and verifies the provider's persisted receipt.
 
-The central failure is a real JVM halt **after the gateway commits and before the workflow saves the receipt or acknowledges the event**. A new JVM recovers the same action without submitting another instruction.
+**Current conference prerelease:** [v1.1.0-rc.1](https://github.com/kkmurthyt21/agent-retry-demo/releases/tag/v1.1.0-rc.1), containing the tested `1.1.0-candidate-build4-checkpoints` runtime. The [v1.0.0 release](https://github.com/kkmurthyt21/agent-retry-demo/releases/tag/v1.0.0) preserves the original offline example.
 
-This is application architecture. The demonstration needs no model service, cloud account, internet connection, container, broker, or credentials. Gateway acceptance is the demonstrated outcome. All account and beneficiary references are synthetic. The JSON is a custom application contract.
+## What this demonstrates
 
-## Run the prepared demonstration
+An agent can receive `UNKNOWN` after a payment request has already been accepted and verified. It can query status or propose the same action again. A fresh model tool-call ID or event ID does not make that a new approved business operation.
 
-Use the supplied `agent-retry-demo.jar` in the complete session kit. Java 17 is the tested runtime baseline. The source targets Java 17 and is compatible with Java 21. Only a local Java runtime is required to run the packaged JAR.
+The application owns the stable operation identity, approval and payment parameters, durable state, inbox/outbox, retry budgets and provider evidence. These mechanisms protect the effect across new agent requests and event redelivery.
 
-Use one terminal and one working directory throughout. Offstage, prepare fresh synthetic fixtures:
+| Scenario | Actual evidence |
+| --- | --- |
+| Live Gemini, normal execution | One payment proposal, one provider submission, one accepted mock payment record, VERIFIED |
+| Live Gemini, completion consumer paused | Agent observed UNKNOWN; Gemini queried status; completion delivery count reached 2; one accepted record |
+| Scripted repeated tool request | Programmed decisions proposed the same approved payment twice; the workflow reused its verified result; one provider submission and one accepted record |
 
-```text
+The reported live recovery branch is **status reconciliation**, not a new Gemini payment proposal. `liveAgentRetryProven: false` is correct for that run. The scripted case separately forces a repeated tool call to test its protection. All three presenter-supplied Windows summaries report `invariantsPassed: true`.
+
+**No real money moves.** The invoice and provider are test fixtures. VERIFIED means the provider record matches the approved request; settlement is outside the demo.
+
+## Run the packaged demo
+
+Download `agent-retry-demo-v1.1.0-rc.1.zip` from the [prerelease](https://github.com/kkmurthyt21/agent-retry-demo/releases/tag/v1.1.0-rc.1), extract it, and open PowerShell in the extracted folder containing `agent-retry-demo.jar`.
+
+The JAR includes its runtime dependencies. Running it requires Java 17 or later; the presenter tested the live scenarios on Windows with Temurin 25.0.4.1. Maven, Docker and a cloud deployment are not needed to run the packaged JAR. Live mode requires a Gemini API key, access to the selected model and internet connectivity. The other Java processes run locally.
+
+### Local check without a model service
+
+```powershell
 java -version
-java -jar agent-retry-demo.jar demo reset
-java -jar agent-retry-demo.jar demo preflight
+java "-Ddemo.debug=true" -jar .\agent-retry-demo.jar agentic --mode scripted --fault completion --wait-ms 8000
 ```
 
-Onstage, run these four commands individually:
+Expected: build4, `decisionSource: SCRIPTED`, two submit proposals, one provider submission, one accepted provider record, `verifiedReuse: 1`, and `invariantsPassed: true`.
 
-```text
-java -jar agent-retry-demo.jar demo normal
-java -jar agent-retry-demo.jar demo boundaries
-java -jar agent-retry-demo.jar demo crash
-java -jar agent-retry-demo.jar demo recover
+### Live Gemini
+
+Configure your existing Gemini key privately in `GEMINI_API_KEY`. If it is absent in this PowerShell session, the following prompts for masked entry:
+
+```powershell
+if ([string]::IsNullOrWhiteSpace($env:GEMINI_API_KEY)) {
+    $demoSecureKey = Read-Host "Gemini API key" -AsSecureString
+    $env:GEMINI_API_KEY = ([System.Net.NetworkCredential]::new("", $demoSecureKey)).Password
+}
+$env:GEMINI_MODEL = "gemini-3.5-flash-lite"
 ```
 
-| Command | Exit code | Observe |
-|---|---:|---|
-| `normal` | 0 | `COMPLETED`, one instruction, one saved plan |
-| `boundaries` | 0 | Duplicate event ignored, fresh envelope reuses the completed action, unsupported contract rejected, unauthorized beneficiary denied. Instruction total stays 1 |
-| `crash` | **23** | Planned hard halt. Gateway total becomes 2, workflow remains `EXECUTING`, local receipt is absent |
-| `recover` | 0 | New JVM loads the original key and plan. Workflow completes. Total stays 2, additional instructions and submission calls during recovery are both 0 |
+`gemini-3.5-flash-lite` is the model used in the reported successful Windows build4 runs. Model access and service latency must be checked in your own environment. The application requires an explicit tested model ID; it does not silently change model or switch to scripted mode.
 
-The planned crash code is part of the demonstration. Any other nonzero exit is a failure. Restarting `recover` again is safe. Reset fixtures before repeating the complete four-command rehearsal.
+Run these commands individually:
 
-The databases live under `data/devfest-demo/` relative to the current directory:
-
-- `workflow.mv.db`: approved intent, workflow version/state, JSON queue, processed-event records, policy decisions, retry budgets, and typed failures.
-- `payment-gateway.mv.db`: accepted instructions and gateway-owned action keys, fingerprints, and receipts.
-
-`demo reset` requires a fixture marker and a free dispatcher lock. It deletes only the two known database files and their trace files. It preserves unrelated files and refuses a nonempty unmarked directory. An optional `--data-dir <directory>` follows the scenario name.
-
-## Build and test
-
-Development requires a JDK 17 or 21 and Maven 3.9.x. Maven downloads dependencies during preparation, never during the live demonstration.
-
-```text
-mvn clean verify
+```powershell
+java -jar .\agent-retry-demo.jar agentic preflight --mode gemini --check-model
+java "-Ddemo.debug=true" -jar .\agent-retry-demo.jar agentic --mode gemini --fault none --wait-ms 8000
+java "-Ddemo.debug=true" -jar .\agent-retry-demo.jar agentic --mode gemini --fault completion --wait-ms 8000
 ```
 
-The result is `target/agent-retry-demo.jar`. Copy it into the prepared demo directory, or change into `target` before using the commands above. Once Maven’s dependencies are cached, `mvn -o clean verify` also works.
+Preflight must identify `integration=SPRING_AI_GOOGLE_GENAI_2.0.1` and finish with `[MODEL_CONNECTED]`. It checks model connectivity, not the whole workflow. Scenario runs print `[RUN_SUMMARY]` and an `[EVIDENCE]` directory. Each scenario uses a fresh directory under `runs/` by default; no reset is needed between these agentic commands. Preflight does not create a scenario run directory.
 
-Verification completed on October 19, 2026 with OpenJDK 17.0.20 and Maven 3.9.11: **45 tests, zero failures, zero errors, zero skipped**. This includes 42 unit/regression cases and three packaged-JAR integration tests. See [test results](docs/TEST_RESULTS.md).
+`--wait-ms 8000` is the tool-observation deadline. Model requests have a separate 45-second limit, progress output every five seconds, and an application-owned budget of three API attempts per pending turn. A model API retry, a fresh payment proposal and broker redelivery have separate counters.
 
-The packaged integration tests launch real child JVMs. One halts with `Runtime.halt(23)`, then a fresh JVM reads the same database files. Another runs all four commands with Java socket access denied and checks a negative-control network probe. That test harness uses the Security Manager available in JDK 17/21. Use those JDK versions for the full test suite.
+Read the [fresh-start checklist](docs/REHEARSAL_CHECKLIST.md) and [seven-minute demo walkthrough](docs/DEMO_SCRIPT.md). Preserve a successful live trace for a clearly labelled fallback: real model calls showed variable latency and one recovered HTTP 503.
 
-## Architecture and guarantees
+## Architecture and source
 
 ```mermaid
 flowchart TD
-    P["Deterministic Planner"] --> G["JSON contract and policy checks"]
-    G --> W["Workflow engine"]
-    W <--> D[("Workflow H2 database")]
-    W --> E["Executor"]
-    E --> T["Mock payment gateway"]
-    T <--> X[("Independent gateway H2 database")]
-    W --> V["Verifier"]
-    V -->|"Read persisted evidence"| T
+  G["Remote Gemini model"] <--> A["Java agent application: Spring AI and journal"]
+  A <--> B["Durable local event broker"]
+  B <--> W["Workflow application: policy, Executor, Verifier"]
+  W <--> P["Mock payment provider and its database"]
 ```
 
-- The Planner’s proposal is data. Trusted workflow records determine tenant, caller, permission, and approved instruction parameters.
-- Schemas `1.0` and `1.1` are bundled and explicitly selected. Version `1.1` permits `clientReference`. Unsupported versions and undeclared fields are rejected. Supporting an optional addition in a new schema does not make it acceptable to every old consumer.
-- One event identity is scoped by consumer, source, and event ID. A completed duplicate returns the recorded decision.
-- One action key is derived from the tenant, workflow, and immutable submission step. It survives new envelopes and process restarts. Reusing it with different meaningful parameters is a conflict.
-- The gateway atomically commits its instruction and operation/receipt records. A unique tenant/action-key constraint also protects concurrent same-key submissions.
-- Local workflow completion, input acknowledgement, and the next JSON event commit together. The outbox protects that local transaction. The provider protects its own separate transaction.
-- Three total delivery attempts and three total processing attempts are persisted per workflow stage. Both include the first attempt. Backoff and a 15-minute fixture deadline are durable. A new envelope or restart cannot replenish the budget. Exhaustion leads to review.
-- Validation, policy, delivery, and processing failures have explicit database categories. Delivery injection occurs before handler invocation. A Verifier retry cannot repeat the completed Executor action.
-- H2 uses `WRITE_DELAY=0`. The tested guarantee is survival of a JVM/process restart with these files intact.
+Four local JVMs run: agent/launcher, broker, workflow application and mock provider. Planner, Executor and Verifier are logical responsibilities; Executor and Verifier are deterministic Java classes in the same workflow JVM. The model integration uses Spring AI programmatically, without Spring Boot.
 
-One dispatcher owns an OS file lock for the entire workflow process. Provider concurrency is tested using independent JDBC connections in the same JVM. Distributed worker leases, broker behavior, hardware loss, financial-network delivery, settlement, and a provider’s retention policy require separate designs and tests.
+HTTP carries the Gemini API, local broker operations and provider calls. Durable queued events coordinate business requests and completion. Local database transactions do not include the provider's database.
 
-For a provider without suitable idempotency or reliable reconciliation, preserve an ambiguous outcome for review. A local deduplication row alone cannot promise exactly-once effects in an arbitrary external system.
+| Concern | Source |
+| --- | --- |
+| Launch processes, readiness, fault selection and summary checks | `AgenticDemo.java` |
+| Durable model/tool loop, pending calls, correlation and agent outbox | `AgenticPlanner.java` |
+| Spring AI request, registered tools and Gemini protocol continuity | `GeminiPlannerModel.java`, `src/main/resources/agentic/` |
+| Broker queues, delivery leases and ACK/NACK | `AgenticBroker.java` |
+| Policy checkpoints, workflow state, inbox/outbox and stage handlers | `AgenticWorkflow.java` |
+| Provider execution/reconciliation and evidence comparison | `Executor.java`, `Verifier.java` |
+| Mock provider's atomic operation identity and accepted record | `AgenticGateway.java`, `MockPaymentGateway.java` |
+| Status-export replacement and bounded file-system retries | `CheckpointFiles.java` |
 
-## Find the relevant code
+Java sources are under `src/main/java/dev/agentretry/demo/`. See [event flow and transaction boundaries](docs/AGENTIC_ARCHITECTURE.md), [Spring AI integration](docs/SPRING_AI_INTEGRATION.md), [tool-call walkthrough](docs/AGENT_DECISION_WALKTHROUGH.md), and [Q&A](docs/AGENTIC_QA.md).
 
-| Concern | File |
-|---|---|
-| Prepared commands and deliberate hard halt | `Main.java` |
-| Durable transitions, inbox/outbox, budgets, and failure routing | `WorkflowEngine.java` |
-| Fixed proposal and stable action identity | `Planner.java` |
-| Explicit bundled schema selection | `Contracts.java` and `src/main/resources/schemas/` |
-| Trusted policy checks | `Policy.java` |
-| External interface and receipt recovery | `PaymentGateway.java`, `Executor.java` |
-| Atomic gateway mutation and idempotency | `MockPaymentGateway.java` |
-| Independent evidence checks | `Verifier.java` |
-| JDBC records and transaction schemas | `Database.java` and `src/main/resources/db/` |
-| Actual process restart and offline proof | `PackagedDemoIT.java` |
+## Build and validation
 
-Java sources are under `src/main/java/dev/agentretry/demo/`. Test sources use the corresponding test directory. The Maven group is `dev.agentretry` and the executable entry point is `dev.agentretry.demo.Main`. The final `WorkflowVerified` fact goes to a local audit sink after verification.
+Use **JDK 17 and Maven 3.9.x** for the complete test suite. The legacy offline network-denial integration test uses the JDK 17 SecurityManager mechanism; its build requirement differs from running the packaged agentic demo on Java 25.
 
-## Presentation and preparation material
+```sh
+mvn clean verify
+```
 
-- [Architecture and transaction boundaries](docs/ARCHITECTURE.md)
-- [Seven-minute demo script](docs/DEMO_SCRIPT.md)
-- [Q&A preparation](docs/QA_PREP.md)
-- [Rehearsal checklist](docs/REHEARSAL_CHECKLIST.md)
-- [Backup recording and playback plan](docs/BACKUP_PLAN.md)
-- [Actual command transcript](docs/DEMO_TRANSCRIPT.txt)
+The result is `target/agent-retry-demo.jar`. Model protocol tests use local simulated responses and require no Gemini key. The recorded build4 verification passed **95 tests: 85 unit and 10 integration, zero failures/errors/skips**, on Linux OpenJDK 17.0.20 and Maven 3.9.11. Separate presenter-supplied Windows summaries validate the three scenarios above. This publication also repeats the scripted completion smoke check against the exact packaged JAR.
 
-The complete private session kit also contains the presentation, speaker notes, backup playback, and conference-evidence register. Publish only material selected for the public repository. Keep organizer correspondence and private evidence outside it.
+See [validation and provenance](docs/TEST_RESULTS.md), [public evidence](evidence/README.md), [build4 changes](docs/CHECKPOINT_CANDIDATE.md) and [release notes](RELEASE_NOTES.md). The runtime JAR SHA-256 is:
 
-## Related published work
+```text
+5ac099ff4d457c3c1ec9a87e494bda97a9b37aee3c9d7f0c1baf05bc857b4773
+```
 
-Krishna Kandi, [Prevent Silent Failures Between AI Agents with Versioned Event Contracts on AWS](https://builder.aws.com/content/3Ivtw3UhZxxl2vzO4z293iDjLlL/prevent-silent-failures-between-ai-agents-with-versioned-event-contracts-on-aws), AWS Builder Center, September 6, 2026.
+## Scope of the guarantees
 
-The earlier [AWS contract-gate project](https://github.com/kkmurthyt21/agent-event-contract-gate-aws) has its own [v1.0.0 release](https://github.com/kkmurthyt21/agent-event-contract-gate-aws/releases/tag/v1.0.0). This Java application extends the teaching example through durable execution and recovery. It is a separate implementation. No AWS code deployment is required.
+- Versioned JSON contracts, durable state, current-policy checks, persisted budgets and separate failure categories are implemented in a deliberately narrow local fixture.
+- Provider idempotency and authoritative receipt lookup protect the demonstrated side effect. A local deduplication row cannot guarantee exactly-once effects in an arbitrary external system.
+- A worker crash after provider commit is a separate supported fault (`--fault worker`). Automated process tests cover it; it is not one of the three reported Windows build4 runs.
+- This example does not establish production broker operations, multi-worker scaling, hardware-loss recovery, real payment settlement or Saga compensation.
 
-## License
+Public evidence includes run summaries and an excerpt explicitly attributed to the presenter's console output. Full live traces remain on the presenter's Windows machine. Private H2 journals, model credentials and run databases are not distributed.
 
-Apache License 2.0. See `LICENSE` and `THIRD_PARTY_NOTICES.md`.
+## Earlier offline example
+
+The original `demo normal`, `boundaries`, `crash` and `recover` commands remain in the code. Their original documentation and release are preserved at [v1.0.0](https://github.com/kkmurthyt21/agent-retry-demo/tree/v1.0.0). The current primary walkthrough uses `agentic` commands above.
+
+## Related work and license
+
+Krishna Kandi, [Prevent Silent Failures Between AI Agents with Versioned Event Contracts on AWS](https://builder.aws.com/content/3Ivtw3UhZxxl2vzO4z293iDjLlL/prevent-silent-failures-between-ai-agents-with-versioned-event-contracts-on-aws), AWS Builder Center. The separate [AWS contract-gate project](https://github.com/kkmurthyt21/agent-event-contract-gate-aws) explores related contract checks; this demo requires no AWS deployment.
+
+Apache License 2.0. See [LICENSE](LICENSE), [third-party notices](THIRD_PARTY_NOTICES.md) and the bundled `licenses/` directory.

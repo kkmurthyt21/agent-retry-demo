@@ -1,0 +1,8 @@
+{
+  "action": "SUBMIT_PAYMENT_INSTRUCTION",
+  "debitAccountRef": "demo-account-001",
+  "beneficiaryRef": "demo-beneficiary-001",
+  "amountMinor": 25000,
+  "currency": "USD",
+  "route": "DEMO_NETWORK"
+}

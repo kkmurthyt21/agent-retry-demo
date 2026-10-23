@@ -1,0 +1,45 @@
+{
+  "decisionSource": "SCRIPTED",
+  "model": "scripted-rehearsal-v1",
+  "modelIntegration": "SCRIPTED_FIXTURE",
+  "observedBehavior": "SCRIPTED_REPROPOSAL",
+  "modelReplies": 5,
+  "submitProposals": 2,
+  "freshPaymentProposalsAfterUnknown": 1,
+  "statusQueriesAfterUnknown": 0,
+  "verifiedResultReturnedToModel": true,
+  "completionFaultTriggered": true,
+  "maxCompletionDeliveryCount": 2,
+  "provider": {
+    "instructions": 1,
+    "submissionCalls": 1,
+    "lookupCalls": 3
+  },
+  "broker": {
+    "messages": 10,
+    "deliveryFailures": 0,
+    "maxDeliveries": 2
+  },
+  "workflow": {
+    "state": "VERIFIED",
+    "operationId": "demo-tenant:INV-1042:approval-v1:submit-payment",
+    "settled": false,
+    "stateVersion": 4,
+    "receipt": {
+      "tenant": "demo-tenant",
+      "actionKey": "demo-tenant:INV-1042:approval-v1:submit-payment",
+      "fingerprint": "f4aefb67284374353a5e5fcf8379bbf4823e37dbab48bc60d4c6b23cd41809e1",
+      "instructionId": "pi-f91e6f3c504ed7f090c9110b",
+      "acceptedAt": 1792720825868
+    },
+    "executionAttempts": 1,
+    "verifiedReuse": 1,
+    "failureCount": 0
+  },
+  "workerRestarts": 0,
+  "javaVersion": "17.0.20",
+  "build": "1.1.0-candidate-build4-checkpoints",
+  "invariantsPassed": true,
+  "liveAgentRetryProven": false,
+  "modelEvidence": "SCRIPTED_REHEARSAL_ONLY"
+}

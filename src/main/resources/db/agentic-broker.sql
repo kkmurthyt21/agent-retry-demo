@@ -1,0 +1,2 @@
+CREATE TABLE IF NOT EXISTS messages(topic VARCHAR(20), event_id VARCHAR(255), body CLOB NOT NULL, fingerprint VARCHAR(64) NOT NULL, deliveries INT DEFAULT 0, lease_token VARCHAR(64), lease_until BIGINT DEFAULT 0, next_at BIGINT DEFAULT 0, status VARCHAR(20) DEFAULT 'READY', PRIMARY KEY(topic,event_id));
+CREATE TABLE IF NOT EXISTS broker_failures(event_id VARCHAR(255), channel VARCHAR(20), reason VARCHAR(255));
