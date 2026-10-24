@@ -1,10 +1,10 @@
 # When AI Agents Retry
 
-Working Java demo for **When AI Agents Retry: Building Reliable Event-Driven Workflows**, DevFest Troy 2026.
+Working Java demo for **When AI Agents Retry: Building Reliable Event-Driven Workflows**.
 
 The invoice-payment assistant uses **Spring AI 2.0.1 and Gemini** to select registered tools. A Java agent application dispatches those selections through durable events. Deterministic business code checks current policy, executes an approved payment request against a mock provider, and verifies the provider's persisted receipt.
 
-**Current conference prerelease:** [v1.1.0-rc.1](https://github.com/kkmurthyt21/agent-retry-demo/releases/tag/v1.1.0-rc.1), containing the tested `1.1.0-candidate-build4-checkpoints` runtime. The [v1.0.0 release](https://github.com/kkmurthyt21/agent-retry-demo/releases/tag/v1.0.0) preserves the original offline example.
+**Current prerelease:** [v1.1.0-rc.1](https://github.com/kkmurthyt21/agent-retry-demo/releases/tag/v1.1.0-rc.1), containing the tested `1.1.0-candidate-build4-checkpoints` runtime. The [v1.0.0 release](https://github.com/kkmurthyt21/agent-retry-demo/releases/tag/v1.0.0) preserves the original offline example.
 
 ## What this demonstrates
 
